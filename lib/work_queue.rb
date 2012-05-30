@@ -14,15 +14,17 @@ class WorkQueue
   # ==== Parameter(s)
   # * +max_threads+ - Maximum number of worker threads.
   # * +max_tasks+ - Maximum number of queued tasks.
+  # * +thread_exception_response+ - What to do if a thread has an exception ('ignore'|'abort')
   #
   # ==== Example(s)
-  #  wq = WorkQueue.new 10, nil
-  #  wq = WorkQueue.new nil, 20
-  #  wq = WorkQueue.new 10, 20
+  #  wq = WorkQueue.new 10, nil, nil
+  #  wq = WorkQueue.new nil, 20, 'ignore'
+  #  wq = WorkQueue.new 10, 20, 'abort'
   #
-  def initialize(max_threads=nil, max_tasks=nil)
+  def initialize(max_threads=nil, max_tasks=nil, thread_exception_response='ignore')
     self.max_threads = max_threads
     self.max_tasks = max_tasks
+    @thread_exception_response = thread_exceptions_response
     @threads = Array.new
     @threads_waiting = 0
     @threads.extend MonitorMixin
@@ -197,7 +199,8 @@ class WorkQueue
     @tasks.synchronize do
       @threads.synchronize do
         if @threads.size < @max_threads && @threads_waiting <= 0 && @tasks.size > 0
-          @threads << Thread.new { run }
+          @threads << thread = Thread.new { run }
+          thread.abort_on_exception = true if @thread_exception_response = 'abort'
         end
       end
     end
