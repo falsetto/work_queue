@@ -200,7 +200,7 @@ class WorkQueue
       @threads.synchronize do
         if @threads.size < @max_threads && @threads_waiting <= 0 && @tasks.size > 0
           @threads << thread = Thread.new { run }
-          thread.abort_on_exception = true if @thread_exception_response = 'abort'
+          thread.abort_on_exception = true if @thread_exception_response == 'abort'
         end
       end
     end
